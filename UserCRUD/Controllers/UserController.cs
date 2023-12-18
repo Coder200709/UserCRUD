@@ -1,4 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 using UserCRUD.Models.Users;
 using UserCRUD.Services.Foundations.Users;
 
@@ -17,9 +20,33 @@ namespace UserCRUD.Controllers
         }
 
         [HttpPost]
-        public ActionResult<User> PostUser(User user)
+        public async ValueTask<ActionResult<User>> PostUserAsync(User user)
         {
-            return this.userService.AddUser(user);
+            return await this.userService.AddUserAsync(user);
+        }
+
+        [HttpGet("GetById_Salom")]
+        public async ValueTask<ActionResult<User>> GetUserByIdAsync(Guid userId)
+        {
+            return await this.userService.RetrieveUserByIdAsync(userId);
+        }
+
+        [HttpGet]
+        public ActionResult<IQueryable<User>> GetAllUsers()
+        {
+            var users =  this.userService.RetrieveAllUsers();
+
+            return Ok(users);
+        }
+        [HttpPut("Update")]
+        public async ValueTask<ActionResult<User>> PutUserAsync(User user)
+        {
+            return await this.userService.ModifyUserAsync(user);
+        }
+        [HttpDelete("O'chirib tasha")]
+        public async ValueTask<ActionResult<User>> DeleteUserAsync(Guid userId)
+        {
+            return await this.userService.RemoveUserAsync(userId);
         }
     }
 }
