@@ -7,46 +7,51 @@ using UserCRUD.Models.Users;
 
 namespace UserCRUD.Brokers.Storages
 {
-    public class StorageBroker : EFxceptionsContext, IStorageBroker
+    public partial class StorageBroker : EFxceptionsContext, IStorageBroker
     {
-        public DbSet<User> Users { get; set; }
 
         public StorageBroker() =>
             this.Database.EnsureCreated();
-        public async ValueTask<User> InsertUserAsync(User user)
+
+        public async ValueTask<T> InsertAsync<T> (T @object)
         {
-            await this.Users.AddAsync(user);
+            var broker = new StorageBroker();
+            broker.Entry(@object).State = EntityState.Added;
             await this.SaveChangesAsync();
 
-            return user;
+            return @object;
         }
-
-        public async ValueTask<User> SelectUserByIdAsync(Guid userId) =>
-            await this.Users.FirstOrDefaultAsync(u => u.Id == userId);
-
-        public IQueryable<User> SelectAllUsers() =>
-             this.Users.AsQueryable();
-
-        public async ValueTask<User> UpdateUserAsync(User updatedUser)
+        public IQueryable<T> SelectAll<T>() where T : class
         {
-            var user = this.Users.Find(updatedUser.Id);
-            this.Entry(user).CurrentValues.SetValues(updatedUser);
+            var broker = new StorageBroker();
 
-            await this.SaveChangesAsync();
+            return broker.Set<T>();
 
-            return updatedUser;
         }
 
-        public async ValueTask<User> DeleteUserAsync(User user)
+        public async ValueTask<T> SelectAsync<T>(params object[] objectId) where T : class
         {
-            this.Users.Remove(user);
-            await this.SaveChangesAsync();
-
-            return user;
+            var broker = new StorageBroker();
+            return await broker.FindAsync<T>(objectId);
         }
 
+        public async ValueTask<T> UpdateAsync<T>(T @object)
+        {
+            var broker = new StorageBroker();
+            broker.Entry(@object).State = EntityState.Modified;
+            await this.SaveChangesAsync();
+            return @object;
+        }
 
-        /////////////////////////////////////////////////////////////////////////////
+        public async ValueTask<T> DeleteAsync<T>(T @object)
+        {
+            var broker = new StorageBroker();
+            broker.Entry(@object).State = EntityState.Deleted;
+            await this.SaveChangesAsync();
+            return @object;
+
+        }
+
         protected override async void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             string connectionString = "Data source = UserCRUD.db";
